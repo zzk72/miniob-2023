@@ -1,3 +1,4 @@
+/// Done
 /* Copyright (c) 2021 OceanBase and/or its affiliates. All rights reserved.
 miniob is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
@@ -67,6 +68,6 @@ public:
   const char *get_data(const Record &record);
 
 private:
-  const Table *table_ = nullptr;
-  const FieldMeta *field_ = nullptr;
+  const Table *table_ = nullptr; // 表元数据
+  const FieldMeta *field_ = nullptr; // 字段元数据,包括字段名、类型、长度、偏移量等
 };

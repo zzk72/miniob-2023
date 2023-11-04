@@ -1,3 +1,4 @@
+/// Done
 /* Copyright (c) 2021 OceanBase and/or its affiliates. All rights reserved.
 miniob is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
@@ -51,9 +52,9 @@ public:
   static RC from_json(const Json::Value &json_value, FieldMeta &field);
 
 protected:
-  std::string name_;
-  AttrType attr_type_;
-  int attr_offset_;
-  int attr_len_;
-  bool visible_;
+  std::string name_; // 字段名
+  AttrType attr_type_; // 字段类型
+  int attr_offset_; // 字段在记录中的偏移量
+  int attr_len_;  // 字段长度
+  bool visible_;  // 字段是否可见
 };

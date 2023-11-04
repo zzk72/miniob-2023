@@ -84,7 +84,7 @@ public:
 
   // TODO refactor
   RC create_index(Trx *trx, const FieldMeta *field_meta, const char *index_name);
-
+  // 获取当前table的RecordFileScanner
   RC get_record_scanner(RecordFileScanner &scanner, Trx *trx, bool readonly);
 
   RecordFileHandler *record_handler() const
@@ -113,8 +113,8 @@ public:
 
 private:
   std::string base_dir_;
-  TableMeta   table_meta_;
+  TableMeta   table_meta_;                        /// 表元数据
   DiskBufferPool *data_buffer_pool_ = nullptr;   /// 数据文件关联的buffer pool
   RecordFileHandler *record_handler_ = nullptr;  /// 记录操作
-  std::vector<Index *> indexes_;
+  std::vector<Index *> indexes_;               /// 索引
 };

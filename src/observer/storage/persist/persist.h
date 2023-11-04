@@ -1,3 +1,4 @@
+/// Done :提供对文件的create、open、close、read、write、seek等操作
 /* Copyright (c) 2021 OceanBase and/or its affiliates. All rights reserved.
 miniob is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.

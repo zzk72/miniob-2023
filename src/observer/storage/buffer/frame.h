@@ -1,3 +1,4 @@
+/// Done
 /* Copyright (c) 2021 OceanBase and/or its affiliates. All rights reserved.
 miniob is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
@@ -42,8 +43,8 @@ public:
 
   friend std::string to_string(const FrameId &frame_id);
 private:
-  int     file_desc_;
-  PageNum page_num_;
+  int     file_desc_; // 文件描述符
+  PageNum page_num_; // 页号
 };
 
 /**
@@ -118,8 +119,8 @@ public:
   int  unpin();
   int  pin_count() const { return pin_count_.load(); }
 
-  void write_latch();
-  void write_latch(intptr_t xid);
+  void write_latch(); // 用于写锁定
+  void write_latch(intptr_t xid); 
 
   void write_unlatch();
   void write_unlatch(intptr_t xid);
@@ -137,7 +138,7 @@ private:
   friend class  BufferPool;
 
   bool              dirty_     = false;
-  std::atomic<int>  pin_count_{0};
+  std::atomic<int>  pin_count_{0}; // 引用计数，atomic<int> 保证原子性
   unsigned long     acc_time_  = 0;
   int               file_desc_ = -1;
   Page              page_;
@@ -148,8 +149,8 @@ private:
   /// 使用一些手段来做测试，提前检测出头疼的死锁问题
   /// 如果编译时没有增加调试选项，这些代码什么都不做
   common::DebugMutex  debug_lock_;
-  intptr_t            write_locker_ = 0;
-  int                 write_recursive_count_ = 0;
-  std::unordered_map<intptr_t, int>  read_lockers_;
+  intptr_t            write_locker_ = 0; // 写锁定者
+  int                 write_recursive_count_ = 0; // 递归写锁定计数
+  std::unordered_map<intptr_t, int>  read_lockers_; // 读锁定者
 };
 

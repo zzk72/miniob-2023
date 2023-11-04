@@ -1,3 +1,4 @@
+/// Done
 /* Copyright (c) 2021 OceanBase and/or its affiliates. All rights reserved.
 miniob is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
@@ -17,7 +18,7 @@ See the Mulan PSL v2 for more details. */
 #include <stdint.h>
 #include "common/types.h"
 
-using TrxID = int32_t;
+using TrxID = int32_t; 
 
 static constexpr int BP_INVALID_PAGE_NUM = -1;
 
@@ -32,7 +33,7 @@ static constexpr const int BP_PAGE_DATA_SIZE = (BP_PAGE_SIZE - sizeof(PageNum) -
  */
 struct Page
 {
-  PageNum page_num;
-  LSN     lsn;
-  char data[BP_PAGE_DATA_SIZE];
+  PageNum page_num; // 页号
+  LSN     lsn; // 日志序列号
+  char data[BP_PAGE_DATA_SIZE]; // 数据
 };

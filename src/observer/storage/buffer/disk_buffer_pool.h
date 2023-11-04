@@ -1,3 +1,4 @@
+/// Done
 /* Copyright (c) 2021 Xie Meiyi(xiemeiyi@hust.edu.cn) and OceanBase and/or its affiliates. All rights reserved.
 miniob is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
@@ -42,7 +43,7 @@ class DiskBufferPool;
  * @defgroup BufferPool
  */
 
-#define BP_FILE_SUB_HDR_SIZE (sizeof(BPFileSubHeader))
+#define BP_FILE_SUB_HDR_SIZE (sizeof(BPFileSubHeader)) // 页帧管理器的元数据大小
 
 /**
  * @brief BufferPool的文件第一个页面，存放一些元数据信息，包括了后面每页的分配信息。
@@ -144,20 +145,23 @@ private:
   RC     free_internal(const FrameId &frame_id, Frame *frame);
 
 private:
-  class BPFrameIdHasher {
+  class BPFrameIdHasher { // 哈希函数
   public:
     size_t operator()(const FrameId &frame_id) const
     {
       return frame_id.hash();
     }
   };
+/*
+* using 是C++中用于定义类型别名的关键字。它用于创建一个新的类型名称，以便更容易地引用某种复杂类型或为类型起一个更具描述性的名称
+* FrameLruCache是别名，LruCache是LRU算法模板类，FrameId是key，Frame*是value，BPFrameIdHasher是哈希函数
+*/ 
+  using FrameLruCache = common::LruCache<FrameId, Frame *, BPFrameIdHasher>; 
+  using FrameAllocator = common::MemPoolSimple<Frame>;        // 页帧内存池             
 
-  using FrameLruCache = common::LruCache<FrameId, Frame *, BPFrameIdHasher>;
-  using FrameAllocator = common::MemPoolSimple<Frame>;
-
-  std::mutex lock_;
-  FrameLruCache  frames_;
-  FrameAllocator allocator_;
+  std::mutex lock_; // 互斥锁
+  FrameLruCache  frames_; // 页帧缓存
+  FrameAllocator allocator_;  
 };
 
 /**
@@ -183,6 +187,8 @@ private:
 /**
  * @brief BufferPool的实现
  * @ingroup BufferPool
+ * @details 一个DiskBufferPool对应一个磁盘文件，用于管理这个磁盘文件的页面。
+ * 多个DiskBufferPool共用一个BPFrameManager，用于管理内存中的页面。
  */
 class DiskBufferPool 
 {
@@ -318,9 +324,9 @@ public:
   static BufferPoolManager &instance();
 
 private:
-  BPFrameManager frame_manager_{"BufPool"};
+  BPFrameManager frame_manager_{"BufPool"}; // 页帧管理器
 
   common::Mutex  lock_;
-  std::unordered_map<std::string, DiskBufferPool *> buffer_pools_;
-  std::unordered_map<int, DiskBufferPool *> fd_buffer_pools_;
+  std::unordered_map<std::string, DiskBufferPool *> buffer_pools_;  // 所有DiskBufferPool的集合，通过文件名映射
+  std::unordered_map<int, DiskBufferPool *> fd_buffer_pools_; // 所有DiskBufferPool的集合，通过文件描述符映射
 };

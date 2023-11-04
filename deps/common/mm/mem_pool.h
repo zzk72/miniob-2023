@@ -114,6 +114,9 @@ protected:
  * MemoryPoolSimple is a simple Memory Pool manager
  * The objects is constructed when creating the pool and destructed when the pool is cleanup.
  * `alloc` calls T's `reinit` routine and `free` calls T's `reset`
+ * MemoryPoolSimple 是一个简单的内存池管理器
+ * 对象在创建内存池时构造，在内存池清理时析构
+ * `alloc` 调用 T 的 `reinit` 方法，`free` 调用 T 的 `reset` 方法
  */
 template <class T>
 class MemPoolSimple : public MemPool<T>

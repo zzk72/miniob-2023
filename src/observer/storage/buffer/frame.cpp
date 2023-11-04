@@ -31,9 +31,9 @@ bool FrameId::operator==(const FrameId &other) const
   return this->equal_to(other);
 }
 
-size_t FrameId::hash() const
+size_t FrameId::hash() const //用于hash_map
 {
-  return (static_cast<size_t>(file_desc_) << 32L) | page_num_;
+  return (static_cast<size_t>(file_desc_) << 32L) | page_num_; // 32L表示32位的长整型，这里是将file_desc_左移32位，然后与page_num_做或运算
 }
 
 int FrameId::file_desc() const
@@ -53,7 +53,7 @@ string to_string(const FrameId &frame_id)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-intptr_t get_default_debug_xid()
+intptr_t get_default_debug_xid()//获取当前线程的xid
 {
   #if 0
   ThreadData *thd = ThreadData::current();
@@ -74,18 +74,21 @@ intptr_t get_default_debug_xid()
 
 void Frame::write_latch()
 {
-  write_latch(get_default_debug_xid());
+  write_latch(get_default_debug_xid());//对当前线程加写锁
 }
 
 void Frame::write_latch(intptr_t xid)
 {
   {
-    scoped_lock debug_lock(debug_lock_);
+    scoped_lock debug_lock(debug_lock_);//对debug_lock_加锁
+
+    // pin_count_是当前Frame的引用计数，如果引用计数为0，说明当前Frame已经被淘汰了，不应该再加锁
     ASSERT(pin_count_.load() > 0,
            "frame lock. write lock failed while pin count is invalid. "
            "this=%p, pin=%d, pageNum=%d, fd=%d, xid=%lx, lbt=%s",
            this, pin_count_.load(), page_.page_num, file_desc_, xid, lbt());
 
+    // 如果当前线程已经持有写锁，那么不应该再加写锁
     ASSERT(read_lockers_.find(xid) == read_lockers_.end(),
            "frame lock write while holding the read lock."
            "this=%p, pin=%d, pageNum=%d, fd=%d, xid=%lx, lbt=%s",

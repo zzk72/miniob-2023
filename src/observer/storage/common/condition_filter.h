@@ -73,10 +73,10 @@ public:
   }
 
 private:
-  ConDesc left_;
+  ConDesc left_;  // 左操作数
   ConDesc right_;
   AttrType attr_type_ = UNDEFINED;
-  CompOp comp_op_ = NO_OP;
+  CompOp comp_op_ = NO_OP; // 比较操作符
 };
 
 class CompositeConditionFilter : public ConditionFilter 
@@ -103,7 +103,7 @@ private:
   RC init(const ConditionFilter *filters[], int filter_num, bool own_memory);
 
 private:
-  const ConditionFilter **filters_ = nullptr;
+  const ConditionFilter **filters_ = nullptr; // 指向一组ConditionFilter指针
   int filter_num_ = 0;
   bool memory_owner_ = false;  // filters_的内存是否由自己来控制
 };

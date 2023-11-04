@@ -302,6 +302,7 @@ RC CLogFile::init(const char *path)
   if (fd < 0) {
     rc = RC::IOERR_OPEN;
     LOG_WARN("failed to open clog file. filename=%s, error=%s", clog_file_path.c_str(), strerror(errno));
+
     return rc;
   }
 

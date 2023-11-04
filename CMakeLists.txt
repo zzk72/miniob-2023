@@ -117,6 +117,8 @@ INSTALL(DIRECTORY etc DESTINATION .
 # script 表示安装时，调用cmake 脚步
 # code 表示安装时，执行cmake 命令， 例如
 INSTALL(CODE "MESSAGE(\"Sample install message.\")")
+list(APPEND CMAKE_PREFIX_PATH "/usr/local/lib")
+list(APPEND CMAKE_PREFIX_PATH "/lib/x86_64-linux-gnu")
 # EXEC_PROGRAM make时执行命令
 #EXEC_PROGRAM(Executable [directory in which to run]
 #        [ARGS <arguments to executable>]

@@ -1,3 +1,4 @@
+///Done
 /* Copyright (c) 2021 Xie Meiyi(xiemeiyi@hust.edu.cn) and OceanBase and/or its affiliates. All rights reserved.
 miniob is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
@@ -61,15 +62,16 @@ RC BPFrameManager::cleanup()
 
 int BPFrameManager::purge_frames(int count, std::function<RC(Frame *frame)> purger)
 {
-  std::lock_guard<std::mutex> lock_guard(lock_);
+  std::lock_guard<std::mutex> lock_guard(lock_);//使用lock_guard模板类，构造时加锁，析构时解锁，防止异常时锁无法解开
 
   std::vector<Frame *> frames_can_purge;
   if (count <= 0) {
     count = 1;
   }
-  frames_can_purge.reserve(count);
+  frames_can_purge.reserve(count);//预留count个空间
 
-  auto purge_finder = [&frames_can_purge, count](const FrameId &frame_id, Frame *const frame) {
+//定义一个lambda表达式，用于查找可以淘汰的frame，如果找到了count个，就返回false，否则返回true continue to look up
+  auto purge_finder = [&frames_can_purge, count](const FrameId &frame_id, Frame *const frame) { 
     if (frame->can_purge()) {
       frame->pin();
       frames_can_purge.push_back(frame);
@@ -80,17 +82,19 @@ int BPFrameManager::purge_frames(int count, std::function<RC(Frame *frame)> purg
     return true;  // true continue to look up
   };
 
-  frames_.foreach_reverse(purge_finder);
+  frames_.foreach_reverse(purge_finder);//foreach_reverse是一个模板函数，用于遍历frames_中的所有元素，调用purge_finder函数
   LOG_INFO("purge frames find %ld pages total", frames_can_purge.size());
 
   /// 当前还在frameManager的锁内，而 purger 是一个非常耗时的操作
   /// 他需要把脏页数据刷新到磁盘上去，所以这里会极大地降低并发度
+
+  // freed_count是本次释放的frame的个数
   int freed_count = 0;
-  for (Frame *frame : frames_can_purge) {
+  for (Frame *frame : frames_can_purge) { //遍历frames_can_purge中的所有元素，调用purger函数
     RC rc = purger(frame);
     if (RC::SUCCESS == rc) {
-      free_internal(frame->frame_id(), frame);
-      freed_count++;
+      free_internal(frame->frame_id(), frame); //释放frame
+      freed_count++;  
     } else {
       frame->unpin();
       LOG_WARN("failed to purge frame. frame_id=%s, rc=%s", 
@@ -104,7 +108,8 @@ int BPFrameManager::purge_frames(int count, std::function<RC(Frame *frame)> purg
 Frame *BPFrameManager::get(int file_desc, PageNum page_num)
 {
   FrameId frame_id(file_desc, page_num);
-  std::lock_guard<std::mutex> lock_guard(lock_);
+  // 
+  std::lock_guard<std::mutex> lock_guard(lock_); // 直接加了一把大锁，其实可以根据访问的页面来细化提高并行度 zzk
   return get_internal(frame_id);
 }
 
@@ -118,6 +123,7 @@ Frame *BPFrameManager::get_internal(const FrameId &frame_id)
   return frame;
 }
 
+// 使用allocator_在内存池中分配一个frame，然后将frame加入到frames_中
 Frame *BPFrameManager::alloc(int file_desc, PageNum page_num)
 {
   FrameId frame_id(file_desc, page_num);
@@ -128,7 +134,7 @@ Frame *BPFrameManager::alloc(int file_desc, PageNum page_num)
     return frame;
   }
 
-  frame = allocator_.alloc();
+  frame = allocator_.alloc(); //allocator_是一个内存池，用于分配frame
   if (frame != nullptr) {
     ASSERT(frame->pin_count() == 0, "got an invalid frame that pin count is not 0. frame=%s", 
            to_string(*frame).c_str());
@@ -147,25 +153,30 @@ RC BPFrameManager::free(int file_desc, PageNum page_num, Frame *frame)
   return free_internal(frame_id, frame);
 }
 
+//释放frame，即使用allocator_将frame放回内存池，然后从frames_中删除frame
 RC BPFrameManager::free_internal(const FrameId &frame_id, Frame *frame)
 {
   Frame *frame_source = nullptr;
-  [[maybe_unused]] bool found = frames_.get(frame_id, frame_source);
+  // frames_是一个哈希表，通过frame_id查找frame，如果找到了，就返回true，否则返回false
+  [[maybe_unused]] bool found = frames_.get(frame_id, frame_source); // maybe_unused表示这个变量可能没有使用，但是不会报错
   ASSERT(found && frame == frame_source && frame->pin_count() == 1,
          "failed to free frame. found=%d, frameId=%s, frame_source=%p, frame=%p, pinCount=%d, lbt=%s",
          found, to_string(frame_id).c_str(), frame_source, frame, frame->pin_count(), lbt());
 
   frame->unpin();
   frames_.remove(frame_id);
-  allocator_.free(frame);
+  allocator_.free(frame); //将frame放回内存池
   return RC::SUCCESS;
 }
 
+//查找FrameLRUList中所有file_desc为file_desc的frame
 std::list<Frame *> BPFrameManager::find_list(int file_desc)
 {
   std::lock_guard<std::mutex> lock_guard(lock_);
 
   std::list<Frame *> frames;
+
+  //定义一个lambda表达式，用于查找file_desc为file_desc的frame，如果找到了，就返回true
   auto fetcher = [&frames, file_desc](const FrameId &frame_id, Frame *const frame) -> bool {
     if (file_desc == frame_id.file_desc()) {
       frame->pin();
@@ -193,11 +204,13 @@ RC BufferPoolIterator::init(DiskBufferPool &bp, PageNum start_page /* = 0 */)
   return RC::SUCCESS;
 }
 
+//判断是否还有下一个被设置的位
 bool BufferPoolIterator::has_next()
 {
   return bitmap_.next_setted_bit(current_page_num_ + 1) != -1;
 }
 
+//获取下一个被使用的页，即bitmap下一个被设置的位
 PageNum BufferPoolIterator::next()
 {
   PageNum next_page = bitmap_.next_setted_bit(current_page_num_ + 1);
@@ -224,6 +237,7 @@ DiskBufferPool::~DiskBufferPool()
   LOG_INFO("disk buffer pool exit");
 }
 
+
 RC DiskBufferPool::open_file(const char *file_name)
 {
   int fd = open(file_name, O_RDWR);
@@ -237,7 +251,7 @@ RC DiskBufferPool::open_file(const char *file_name)
   file_desc_ = fd;
 
   RC rc = RC::SUCCESS;
-  rc = allocate_frame(BP_HEADER_PAGE, &hdr_frame_);
+  rc = allocate_frame(BP_HEADER_PAGE, &hdr_frame_); // 分配一个frame作为header
   if (rc != RC::SUCCESS) {
     LOG_ERROR("failed to allocate frame for header. file name %s", file_name_.c_str());
     close(fd);
@@ -245,18 +259,20 @@ RC DiskBufferPool::open_file(const char *file_name)
     return rc;
   }
 
+//为新分配的frame设置file_desc
   hdr_frame_->set_file_desc(fd);
   hdr_frame_->access();
 
+//将文件的第一页读入到hdr_frame_中
   if ((rc = load_page(BP_HEADER_PAGE, hdr_frame_)) != RC::SUCCESS) {
     LOG_ERROR("Failed to load first page of %s, due to %s.", file_name, strerror(errno));
-    purge_frame(BP_HEADER_PAGE, hdr_frame_);
+    purge_frame(BP_HEADER_PAGE, hdr_frame_); 
     close(fd);
     file_desc_ = -1;
     return rc;
   }
 
-  file_header_ = (BPFileHeader *)hdr_frame_->data();
+  file_header_ = (BPFileHeader *)hdr_frame_->data(); //设置file_header_
 
   LOG_INFO("Successfully open %s. file_desc=%d, hdr_frame=%p, file header=%s",
            file_name, file_desc_, hdr_frame_, file_header_->to_string().c_str());
@@ -421,6 +437,7 @@ RC DiskBufferPool::unpin_page(Frame *frame)
   return RC::SUCCESS;
 }
 
+// 将buf刷新到磁盘，然后释放buf
 RC DiskBufferPool::purge_frame(PageNum page_num, Frame *buf)
 {
   if (buf->pin_count() != 1) {
@@ -542,9 +559,10 @@ RC DiskBufferPool::recover_page(PageNum page_num)
   return RC::SUCCESS;
 }
 
+//
 RC DiskBufferPool::allocate_frame(PageNum page_num, Frame **buffer)
 {
-  auto purger = [this](Frame *frame) {
+  auto purger = [this](Frame *frame) { //定义一个lambda表达式，用于淘汰frame
     if (!frame->dirty()) {
       return RC::SUCCESS;
     }
@@ -563,19 +581,19 @@ RC DiskBufferPool::allocate_frame(PageNum page_num, Frame **buffer)
   };
 
   while (true) {
-    Frame *frame = frame_manager_.alloc(file_desc_, page_num);
-    if (frame != nullptr) {
+    Frame *frame = frame_manager_.alloc(file_desc_, page_num); // 尝试从frameManager中分配一个frame
+    if (frame != nullptr) {//如果分配成功，就返回frame
       *buffer = frame;
       return RC::SUCCESS;
     }
 
     LOG_TRACE("frames are all allocated, so we should purge some frames to get one free frame");
-    (void)frame_manager_.purge_frames(1/*count*/, purger);
+    (void)frame_manager_.purge_frames(1/*count*/, purger); //否则就用传入的函数purger淘汰一个frame，然后再次尝试分配
   }
   return RC::BUFFERPOOL_NOBUF;
 }
 
-RC DiskBufferPool::check_page_num(PageNum page_num)
+RC DiskBufferPool::check_page_num(PageNum page_num) 
 {
   if (page_num >= file_header_->page_count) {
     LOG_ERROR("Invalid pageNum:%d, file's name:%s", page_num, file_name_.c_str());
@@ -633,6 +651,7 @@ BufferPoolManager::~BufferPoolManager()
   }
 }
 
+// 创建一个文件，然后初始化文件头
 RC BufferPoolManager::create_file(const char *file_name)
 {
   int fd = open(file_name, O_RDWR | O_CREAT | O_EXCL, S_IREAD | S_IWRITE);
@@ -652,22 +671,23 @@ RC BufferPoolManager::create_file(const char *file_name)
     return RC::IOERR_ACCESS;
   }
 
+ // 申请一个page，用于存储文件头
   Page page;
-  memset(&page, 0, BP_PAGE_SIZE);
+  memset(&page, 0, BP_PAGE_SIZE); //将page的数据清零
 
   BPFileHeader *file_header = (BPFileHeader *)page.data;
-  file_header->allocated_pages = 1;
+  file_header->allocated_pages = 1; 
   file_header->page_count = 1;
 
   char *bitmap = file_header->bitmap;
-  bitmap[0] |= 0x01;
-  if (lseek(fd, 0, SEEK_SET) == -1) {
+  bitmap[0] |= 0x01; //将bitmap的第0位设置为1
+  if (lseek(fd, 0, SEEK_SET) == -1) { //将文件指针移动到文件开头
     LOG_ERROR("Failed to seek file %s to position 0, due to %s .", file_name, strerror(errno));
     close(fd);
     return RC::IOERR_SEEK;
   }
 
-  if (writen(fd, (char *)&page, BP_PAGE_SIZE) != 0) {
+  if (writen(fd, (char *)&page, BP_PAGE_SIZE) != 0) { //将文件头写入到文件中
     LOG_ERROR("Failed to write header to file %s, due to %s.", file_name, strerror(errno));
     close(fd);
     return RC::IOERR_WRITE;
@@ -680,15 +700,15 @@ RC BufferPoolManager::create_file(const char *file_name)
 
 RC BufferPoolManager::open_file(const char *_file_name, DiskBufferPool *&_bp)
 {
-  std::string file_name(_file_name);
+  std::string file_name(_file_name); //将文件名转换为string类型
 
   std::scoped_lock lock_guard(lock_);
-  if (buffer_pools_.find(file_name) != buffer_pools_.end()) {
+  if (buffer_pools_.find(file_name) != buffer_pools_.end()) { //如果文件已经打开了，就返回错误
     LOG_WARN("file already opened. file name=%s", _file_name);
     return RC::BUFFERPOOL_OPEN;
   }
 
-  DiskBufferPool *bp = new DiskBufferPool(*this, frame_manager_);
+  DiskBufferPool *bp = new DiskBufferPool(*this, frame_manager_); //创建一个buffer pool
   RC rc = bp->open_file(_file_name);
   if (rc != RC::SUCCESS) {
     LOG_WARN("failed to open file name");
@@ -696,7 +716,7 @@ RC BufferPoolManager::open_file(const char *_file_name, DiskBufferPool *&_bp)
     return rc;
   }
 
-  buffer_pools_.insert(std::pair<std::string, DiskBufferPool *>(file_name, bp));
+  buffer_pools_.insert(std::pair<std::string, DiskBufferPool *>(file_name, bp)); //将buffer pool插入到buffer pools中
   fd_buffer_pools_.insert(std::pair<int, DiskBufferPool *>(bp->file_desc(), bp));
   LOG_DEBUG("insert buffer pool into fd buffer pools. fd=%d, bp=%p, lbt=%s", bp->file_desc(), bp, lbt());
   _bp = bp;

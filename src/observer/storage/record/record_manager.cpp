@@ -1,3 +1,4 @@
+/// Done
 /* Copyright (c) 2021 Xie Meiyi(xiemeiyi@hust.edu.cn) and OceanBase and/or its affiliates. All rights reserved.
 miniob is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
@@ -27,7 +28,7 @@ static constexpr int PAGE_HEADER_SIZE = (sizeof(PageHeader));
  * 
  * @param size 待对齐的字节数
  */
-int align8(int size) { return (size + 7) / 8 * 8; }
+int align8(int size) { return (size + 7) / 8 * 8; } //使size向上取整为8的倍数
 
 /**
  * @brief 计算指定大小的页面，可以容纳多少个记录
@@ -48,7 +49,7 @@ int page_record_capacity(int page_size, int record_size)
  *
  * @param record_capacity 想要存放多少记录
  */
-int page_bitmap_size(int record_capacity) { return (record_capacity + 7) / 8; }
+int page_bitmap_size(int record_capacity) { return (record_capacity + 7) / 8; } 
 
 ////////////////////////////////////////////////////////////////////////////////
 RecordPageIterator::RecordPageIterator() {}
@@ -70,7 +71,7 @@ RC RecordPageIterator::next(Record &record)
   record.set_data(record_page_handler_->get_record_data(record.rid().slot_num));
 
   if (next_slot_num_ >= 0) {
-    next_slot_num_ = bitmap_.next_setted_bit(next_slot_num_ + 1);
+    next_slot_num_ = bitmap_.next_setted_bit(next_slot_num_ + 1); // 调用bitmap的next_setted_bit函数获取下一个有效的slot_num
   }
   return record.rid().slot_num != -1 ? RC::SUCCESS : RC::RECORD_EOF;
 }

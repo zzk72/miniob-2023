@@ -26,6 +26,7 @@ int find_first_zero(char byte, int start)
   return -1;
 }
 
+// 获取字节中第一个被设置的位
 int find_first_setted(char byte, int start)
 {
   for (int i = start; i < 8; i++) {
@@ -93,13 +94,14 @@ int Bitmap::next_unsetted_bit(int start)
   return ret;
 }
 
+// 获取下一个被设置的位
 int Bitmap::next_setted_bit(int start)
 {
   int ret = -1;
-  int start_in_byte = start % 8;
+  int start_in_byte = start % 8; // 字节中的偏移
   for (int iter = start / 8, end = bytes(size_); iter < end; iter++) {
     char byte = bitmap_[iter];
-    if (byte != 0x00) {
+    if (byte != 0x00) { // 0x00表示该字节没有被设置
       int index_in_byte = find_first_setted(byte, start_in_byte);
       if (index_in_byte >= 0) {
         ret = iter * 8 + index_in_byte;

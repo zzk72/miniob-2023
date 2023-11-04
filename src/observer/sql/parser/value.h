@@ -1,3 +1,4 @@
+/// Done
 /* Copyright (c) 2021 OceanBase and/or its affiliates. All rights reserved.
 miniob is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
@@ -20,6 +21,7 @@ See the Mulan PSL v2 for more details. */
  * @brief 属性的类型
  * 
  */
+// TODO: 拓展date类型
 enum AttrType
 {
   UNDEFINED,
@@ -34,6 +36,7 @@ AttrType attr_type_from_string(const char *s);
 
 /**
  * @brief 属性的值
+ * @details 存贮属性的值的类型(attr_type_)和length_，以及对应的数据(num_value_和str_value_)
  * 
  */
 class Value 

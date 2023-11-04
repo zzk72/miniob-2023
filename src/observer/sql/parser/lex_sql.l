@@ -140,3 +140,7 @@ EXPLAIN                                 RETURN_TOKEN(EXPLAIN);
 void scan_string(const char *str, yyscan_t scanner) {
   yy_switch_to_buffer(yy_scan_string(str, scanner), scanner);
 }
+
+[Dd][Aa][Tt][Ee]                     RETURN_TOKEN(DATE_T);  // 增加DATE的token，需要在yacc文件中增加DATE_T的token
+
+{QUOTE}[0-9]{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01]){QUOTE} yylval->string=strdup(yytext); RETURN_TOKEN(DATE_STR);  // 使用正则表达式过滤DATE。需要在yacc文件中增加 %token <string> DATE_STR

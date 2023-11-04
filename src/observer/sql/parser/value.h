@@ -27,6 +27,7 @@ enum AttrType
   UNDEFINED,
   CHARS,          ///< 字符串类型
   INTS,           ///< 整数类型(4字节)
+  DATES,          ///< 日期类型
   FLOATS,         ///< 浮点数类型(4字节)
   BOOLEANS,       ///< boolean类型，当前不是由parser解析出来的，是程序内部使用的
 };
@@ -61,7 +62,7 @@ public:
   {
     this->attr_type_ = type;
   }
-  void set_data(char *data, int length);
+  void set_data(char *data, int length);// TODO: 拓展date类型
   void set_data(const char *data, int length)
   {
     this->set_data(const_cast<char *>(data), length);
@@ -69,8 +70,9 @@ public:
   void set_int(int val);
   void set_float(float val);
   void set_boolean(bool val);
+  void set_date(int val); // TODO: 拓展date类型
   void set_string(const char *s, int len = 0);
-  void set_value(const Value &value);
+  void set_value(const Value &value);// TODO: 拓展date类型
 
   std::string to_string() const;
 
@@ -96,6 +98,7 @@ public:
   float get_float() const;
   std::string get_string() const;
   bool get_boolean() const;
+  int get_date() const; // TODO: 拓展date类型
 
 private:
   AttrType attr_type_ = UNDEFINED;
@@ -105,6 +108,7 @@ private:
     int int_value_;
     float float_value_;
     bool bool_value_;
+    int date_value_; //好像没必要增加date类型，因为date类型的比较和int类型的比较是一样的
   } num_value_;
   std::string str_value_;
 };

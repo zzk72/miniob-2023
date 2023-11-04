@@ -19,7 +19,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/comparator.h"
 #include "common/lang/string.h"
 
-const char *ATTR_TYPE_NAME[] = {"undefined", "chars", "ints", "floats", "booleans"};
+const char *ATTR_TYPE_NAME[] = {"undefined", "chars", "ints", "dates","floats", "booleans"};
 
 const char *attr_type_to_string(AttrType type)
 {
@@ -64,7 +64,8 @@ void Value::set_data(char *data, int length)
     case CHARS: {
       set_string(data, length);
     } break;
-    case INTS: {
+    case INTS: 
+    case DATES:{
       num_value_.int_value_ = *(int *)data;
       length_ = length;
     } break;
@@ -76,6 +77,10 @@ void Value::set_data(char *data, int length)
       num_value_.bool_value_ = *(int *)data != 0;
       length_ = length;
     } break;
+    // case DATES: {
+    //   num_value_.date_value_ = *(int *)data;
+    //   length_ = length;
+    // } break;
     default: {
       LOG_WARN("unknown data type: %d", attr_type_);
     } break;
@@ -115,7 +120,8 @@ void Value::set_string(const char *s, int len /*= 0*/)
 void Value::set_value(const Value &value)
 {
   switch (value.attr_type_) {
-    case INTS: {
+    case INTS: 
+    case DATES:{
       set_int(value.get_int());
     } break;
     case FLOATS: {
@@ -127,6 +133,9 @@ void Value::set_value(const Value &value)
     case BOOLEANS: {
       set_boolean(value.get_boolean());
     } break;
+    // case DATES: {
+    //   set_date(value.get_date());
+    // } break;
     case UNDEFINED: {
       ASSERT(false, "got an invalid value type");
     } break;
@@ -149,7 +158,8 @@ std::string Value::to_string() const
 {
   std::stringstream os;
   switch (attr_type_) {
-    case INTS: {
+    case INTS: 
+    case DATES:{
       os << num_value_.int_value_;
     } break;
     case FLOATS: {
@@ -161,6 +171,9 @@ std::string Value::to_string() const
     case CHARS: {
       os << str_value_;
     } break;
+    // case DATES: {
+    //   os << num_value_.date_value_;
+    // } break;
     default: {
       LOG_WARN("unsupported attr type: %d", attr_type_);
     } break;
@@ -172,9 +185,13 @@ int Value::compare(const Value &other) const
 {
   if (this->attr_type_ == other.attr_type_) {
     switch (this->attr_type_) {
-      case INTS: {
+      case INTS: 
+      case DATES:{
         return common::compare_int((void *)&this->num_value_.int_value_, (void *)&other.num_value_.int_value_);
       } break;
+      // case DATES: {
+      //   return common::compare_int((void *)&this->num_value_.date_value_, (void *)&other.num_value_.date_value_);
+      // } break;
       case FLOATS: {
         return common::compare_float((void *)&this->num_value_.float_value_, (void *)&other.num_value_.float_value_);
       } break;
@@ -213,7 +230,8 @@ int Value::get_int() const
         return 0;
       }
     }
-    case INTS: {
+    case INTS: 
+    case DATES:{
       return num_value_.int_value_;
     }
     case FLOATS: {
@@ -241,7 +259,8 @@ float Value::get_float() const
         return 0.0;
       }
     } break;
-    case INTS: {
+    case INTS: 
+    case DATES:{
       return float(num_value_.int_value_);
     } break;
     case FLOATS: {
@@ -284,7 +303,8 @@ bool Value::get_boolean() const
         return !str_value_.empty();
       }
     } break;
-    case INTS: {
+    case INTS: 
+    case DATES:{
       return num_value_.int_value_ != 0;
     } break;
     case FLOATS: {

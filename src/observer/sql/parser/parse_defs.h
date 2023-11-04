@@ -304,6 +304,7 @@ public:
   LoadDataSqlNode           load_data;
   ExplainSqlNode            explain;
   SetVariableSqlNode        set_variable;
+  
 
 public:
   ParsedSqlNode();
